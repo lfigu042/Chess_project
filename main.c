@@ -27,27 +27,42 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     int piece = board[srcI][srcJ];//moved piece...
     int pieceType = abs(piece);
     switch (pieceType) {
-    case ROOK:
+    case ROOK: //straight up/down left/right
+        if(srcI != trgI && srcJ != trgJ) return 0;
+        if (srcI < trgI)//case 1 left to right
+            for (i = 1; i < trgI - srcI; i++)
+                if (board[srcI + i][srcJ] != EMPTY)
+                    return 0;
+        else if (srcI > trgI)//case 2 right to left
+             for (i = 1; i < srcI - trgI; i++)
+                 if (board[srcI - i][srcJ] != EMPTY)
+                     return 0;
         break;
     case PAWN:
         break;
     case KNIGHT://L shape
         return abs((srcI - trgI) * (srcJ - trgJ)) == 2;
-    case BISHOP:
-        if (abs(srcI - trgI) != abs(srcJ - trgJ))
-            return 0;
+    case BISHOP: //diagonals
+        if (abs(srcI - trgI) != abs(srcJ - trgJ)) return 0;
         if (srcI < trgI && srcJ < trgJ)//case 1
             for (i = 1; i < trgI - srcI; i++)
                 if (board[srcI + i][srcJ + i] != EMPTY)
                     return 0;
         else if (srcI < trgI && srcJ > trgJ) {//case 2
-            for (;;);
+            for (i = 1; i < trgI - srcI; i++)
+                if (board[srcI + i][srcJ - i] != EMPTY)
+                    return 0;
         }
-        else if (srcI > trgI && srcJ < trgJ) //case 3
-            for (;;);
-        else //case 4
-            for (;;);
-
+        else if (srcI > trgI && srcJ < trgJ){ //case 3
+            for (i = 1; i < srcI - trgI; i++)
+                if (board[srcI - i][srcJ + i] != EMPTY)
+                    return 0;
+        }
+        else{ //case 4
+            for (i = 1; i < srcI - trgI; i++)
+                if (board[srcI - i][srcJ - i] != EMPTY)
+                    return 0;
+        }
         break;
     case QUEEN:
         break;
