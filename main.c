@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include<math.h>
-#include <string.h>
+#include<string.h>
+//#include<stdlib.h>
+
 #define MAX_COMMAND_TOKEN_LENGTH 6
 #define WHITE 1
 #define BLACK -1
@@ -26,14 +28,11 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     int pieceType = abs(piece);
     switch (pieceType) {
     case ROOK:
-
         break;
     case PAWN:
-
         break;
     case KNIGHT://L shape
         return abs((srcI - trgI) * (srcJ - trgJ)) == 2;
-        break;
     case BISHOP:
         if (abs(srcI - trgI) != abs(srcJ - trgJ))
             return 0;
@@ -51,7 +50,6 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
 
         break;
     case QUEEN:
-
         break;
     case KING:
         break;
@@ -62,21 +60,22 @@ static int isLegalCapture(int srcI, int srcJ, int trgI, int trgJ) {
     return 1;//legal move
 }
 static int turn = WHITE;
+
 char getCommandWord(char command[], int maxLength) {
     char lastCharacter;//either space or new line
     int i;
     for (i = 0; (lastCharacter = getchar()) == ' '; i++);//skip leading white spaces
-    if (lastCharacter == '\n') {
-        command[0] = '\0';
-        return lastCharacter;
-    }
+        if (lastCharacter == '\n') {
+            command[0] = '\0';
+            return lastCharacter;
+        }
     command[0] = lastCharacter;
     for (i = 1; i < maxLength - 1 && (command[i] = getchar()) != ' ' && command[i] != '\n'; i++);
     lastCharacter = command[i];
     command[i] = '\0';
     return lastCharacter;
 }
-handleMove() {
+void handleMove() {
     char source[MAX_COMMAND_TOKEN_LENGTH];
     char target[MAX_COMMAND_TOKEN_LENGTH];
     char lastCharacter;
@@ -84,13 +83,13 @@ handleMove() {
     lastCharacter = getCommandWord(source, MAX_COMMAND_TOKEN_LENGTH);
     if (lastCharacter == '\n') {
         printf("Too few arguments for mv command! It must be in the form of mv ai bj.\n");
-        return 0;
+        return;
     }
     lastCharacter = getCommandWord(target, MAX_COMMAND_TOKEN_LENGTH);
     if (lastCharacter != '\n') {
         printf("Too many arguments for mv command! It must be in the form of mv ai bj.\n");
         while (getCommandWord(target, MAX_COMMAND_TOKEN_LENGTH) != '\n');//skip the rest of illegal command..
-        return 0;
+        return;
     }
     sourceFile = source[0];//source = "a5", sourceFile = 'a'
     targetFile = target[0];
@@ -105,20 +104,20 @@ handleMove() {
     if (sourceI < 0 || sourceJ < 0 || targetI < 0 || targetJ < 0
         || sourceI > 7 || sourceJ > 7 || targetI > 7 || targetJ > 7) {
         printf("invalid mv arguments\n");
-        return 0;
+        return;
     }
     //checking the turn first
     if (board[sourceI][sourceJ] * turn < 0) {
         printf("Turn violation, it's %s to move\n", turn == 1 ? "white" : "black");
-        return 0;
+        return;
     }
     if (board[sourceI][sourceJ] == EMPTY || board[targetI][targetJ] != EMPTY) {
         printf("Invalid move: either source square is empty or target square is not empty\n");
-        return 0;
+        return;
     }
     if (!isLegalMove(sourceI, sourceJ, targetI, targetJ)) {
         printf("Illegal chess move\n");
-        return 0;
+        return;
     }
     //end of error checking....
 
@@ -184,41 +183,35 @@ handleShow() {
         printf("%c%c", 'a' + i, i == 7 ? '\n' : '\t');
     for (i = 0; i < 8; i++)//table itself
         for (j = 0; j < 9; j++)
-            printf("%d%c", j == 0 ? 8 - i: board[i][j - 1], j == 8 ? '\n' : '\t');
+            printf("%d%c", j == 0 ? 8 - i : board[i][j - 1], j == 8 ?  '\n' : '\t');
 }
 main() {
     char command[MAX_COMMAND_TOKEN_LENGTH];
     char lastCharacter;
-    while (1) {//infinite while loop...
-        printf("Please enter a new command...\n");
+    while (1){ //infinite while loop...
+        printf("Please enter a new command... quit , mv , cp , show\n");
         lastCharacter = getCommandWord(command, MAX_COMMAND_TOKEN_LENGTH);
-        if (strcmp(command, "quit") == 0)//if command === "quit"
+        printf("you typed %s \n", command);
+
+
+        if (strcmp(command, "quit") == 0){ //if command === "quit"
+            printf("Thank you for playing...");
             break;
-        else if (!strcmp(command, "mv"))//if command == "mv"
-        {
+        }else if (!strcmp(command, "mv")){ //if command == "mv"
             if (lastCharacter == '\n')//mv\n
                 printf("Too few arguments for mv command! It must be in the form of mv ai bj.\n");
-            else
-                handleMove();
-        }
-        else if (!strcmp(command, "cp"))//if command == "cp"
-        {
+            else handleMove();
+        }else if (!strcmp(command, "cp")){ //if command == "cp"
             if (lastCharacter == '\n')//cp\n
                 printf("Too few arguments for cp command! It must be in the form of cp ai bj.\n");
-            else
-                handleCapture();
-        }
-        else if (!strcmp(command, "show"))//if command == "show"
-        {
-            if (lastCharacter != '\n') {//show x\n
+            else handleCapture();
+        } else if (!strcmp(command, "show")){ //if command == "show"
+            if (lastCharacter != '\n'){ //show x\n
                 printf("Too many arguments for show command! It must be in the form of show.\n");
                 while (getCommandWord(command, MAX_COMMAND_TOKEN_LENGTH) != '\n');//skip the invalid show command...
-            }
-            else
-                handleShow();
-        }
-        else {
-            printf("invalid command! Your command must start either with quit, mv or cp.\n");
+            } else handleShow();
+        }else {
+            printf("\n invalid command! Your command must start either with quit, mv or cp.\n");
             while (lastCharacter != '\n')//skip the remainder of my invalid command...
                 lastCharacter = getCommandWord(command, MAX_COMMAND_TOKEN_LENGTH);
         }
