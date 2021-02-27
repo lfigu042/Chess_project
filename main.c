@@ -22,51 +22,61 @@ static int board[8][8] = { {-4, -2, -3, -5, -6, -3, -2, -4},
                             {0, 0, 0, 0, 0, 0, 0, 0},
                             {1, 1, 1, 1, 1, 1, 1, 1},
                             {4, 2, 3, 5, 6, 3, 2, 4}};
+
 static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     int i;
     int piece = board[srcI][srcJ];//moved piece...
     int pieceType = abs(piece);
+
     switch (pieceType) {
     case ROOK: //straight up/down left/right
-        if(srcI != trgI && srcJ != trgJ) return 0;
-        if (srcI < trgI) {//case 1 left to right
-            for (i = 1; i < trgI - srcI; i++)
-                if (board[srcI + i][srcJ] != EMPTY)
-                    return 0;
-        }else if (srcI > trgI) {//case 2 right to left
-            for (i = 1; i < srcI - trgI; i++)
-                if (board[srcI - i][srcJ] != EMPTY)
-                    return 0;
-        }else if (trgI > srcJ) { //going up
+        if(srcI != trgI && srcJ != trgJ) return 0; //if not moving up/down or left/right
+        if (srcJ < trgJ) {//case 1 left to right
             for (i = 1; i < trgJ - srcJ; i++)
                 if (board[srcI][srcJ + i] != EMPTY)
                     return 0;
+        }else if (srcJ > trgJ) {//case 2 right to left
+            for (i = 1; i < srcJ - trgJ; i++)
+                if (board[srcI][srcJ - i] != EMPTY)
+                    return 0;
+        }else if (srcI > trgI) { //going up
+            for (i = 1; i < srcI - trgI; i++)
+                if (board[srcI - i][srcJ ] != EMPTY)
+                    return 0;
         }else { //going down
-            if (srcJ > trgI)
-                for (i = 1; i < srcJ - trgI; i++)
-                    if (board[srcI][srcJ - i] != EMPTY)
-                        return 0;
+            for (i = 1; i < trgI - srcI; i++)
+                if (board[srcI + i][srcJ] != EMPTY)
+                    return 0;
         }
     case PAWN: //one space toward opposite side board or two spaces if first time moving
-        int moves = abs(trgJ -srcJ);
-        if(moves < 1 || moves > 2 || (srcI != trgI)) return 0; // pawn can never move more than twice and it cant change columns
-        if(moves == 2 && (srcJ == 7 || srcJ == 2)){ //if pawn is in starting row, it can move two spaces forward
-            if (turn > 0){ //white piece
+        int moves = abs(trgI - srcI);
+            if(moves < 1 || moves > 2 || (srcJ != trgJ)) { // pawn can never move more than twice and it cant change columns
+            printf("pawn cannot move more than 2 or less than 1... and cannot change column \n");
+            return 0;
+        }
+        if(moves == 2 && (srcI == 6 || srcI == 1)){ //if pawn is in starting row, it can move two spaces forward
+            if (piece > 0){ //white piece
                 for (i = 1; i < 2; i++)
-                    if (board[srcI][srcJ + i] != EMPTY)
+                    if (board[srcI - i][srcJ] != EMPTY)
                         return 0;
+                    else{
+                        printf("spot clear for white pawn...");
+                    }
             }else{ //black piece
                 for (i = 1; i < 2; i++)
-                    if (board[srcI][srcJ - i] != EMPTY)
+                    if (board[srcI + i][srcJ] != EMPTY)
                         return 0;
+                    else{
+                        printf("spot clear for black pawn...");
+                    }
             }
         }else{ //only move once space forward
-            if((abs(srcJ - trgJ) > 1) ) return 0;
+            if((abs(srcI - trgI) > 1) ) return 0;
             else if (turn > 0){ //white piece
-                if (board[trgI][trgJ] != EMPTY || (trgJ - srcJ) != 1)
+                if (board[trgI][trgJ] != EMPTY || (trgI - srcI) != 1)
                     return 0;
             }else{ //black piece
-                if (board[trgI][trgJ] != EMPTY || (srcJ - trgJ) != 1)
+                if (board[trgI][trgJ] != EMPTY || (srcI - trgI) != 1)
                     return 0;
             }
         }
@@ -75,20 +85,21 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
         return abs((srcI - trgI) * (srcJ - trgJ)) == 2;
     case BISHOP: //diagonals
         if (abs(srcI - trgI) != abs(srcJ - trgJ)) return 0;
+        int change = abs(trgI - srcI);
         if (srcI < trgI && srcJ < trgJ) {//case 1
-            for (i = 1; i < trgI - srcI; i++)
+            for (i = 1; i < change; i++)
                 if (board[srcI + i][srcJ + i] != EMPTY)
                     return 0;
         }else if (srcI < trgI && srcJ > trgJ) {//case 2
-            for (i = 1; i < trgI - srcI; i++)
+            for (i = 1; i < change ; i++)
                 if (board[srcI + i][srcJ - i] != EMPTY)
                     return 0;
         }else if (srcI > trgI && srcJ < trgJ){ //case 3
-            for (i = 1; i < srcI - trgI; i++)
+            for (i = 1; i < change; i++)
                 if (board[srcI - i][srcJ + i] != EMPTY)
                     return 0;
         }else{ //case 4
-            for (i = 1; i < srcI - trgI; i++)
+            for (i = 1; i < change; i++)
                 if (board[srcI - i][srcJ - i] != EMPTY)
                     return 0;
         }
@@ -96,39 +107,38 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     case QUEEN: //bishop and Rook movements
         if ((abs(srcI - trgI) != abs(srcJ - trgJ)) || (srcI != trgI && srcJ != trgJ)) return 0;
             //Rook move for queen
-            if (srcI < trgI) {//case 1 left to right
-                for (i = 1; i < trgI - srcI; i++)
-                    if (board[srcI + i][srcJ] != EMPTY)
-                        return 0;
-            }else if (srcI > trgI) {//case 2 right to left
-                for (i = 1; i < srcI - trgI; i++)
-                    if (board[srcI - i][srcJ] != EMPTY)
-                        return 0;
-            }else if (trgI > srcJ) { //going up
+            if (srcJ < trgJ) {//case 1 left to right
                 for (i = 1; i < trgJ - srcJ; i++)
                     if (board[srcI][srcJ + i] != EMPTY)
                         return 0;
-            }else if(srcJ > trgJ){ //going down
-                if (srcJ > trgI)
-                    for (i = 1; i < srcJ - trgI; i++)
-                        if (board[srcI][srcJ - i] != EMPTY)
-                            return 0;
+            }else if (srcJ > trgJ) {//case 2 right to left
+                for (i = 1; i < srcJ - trgJ; i++)
+                    if (board[srcI][srcJ - i] != EMPTY)
+                        return 0;
+            }else if (srcI > trgI) { //going up
+                for (i = 1; i < srcI - trgI; i++)
+                    if (board[srcI - i][srcJ ] != EMPTY)
+                        return 0;
+            }else if(srcI < trgI){ //going down
+                for (i = 1; i < trgI - srcI; i++)
+                    if (board[srcI + i][srcJ] != EMPTY)
+                        return 0;
             }
             //Bishop move for queen
             else if (srcI < trgI && srcJ < trgJ) {//case 1
-                for (i = 1; i < trgI - srcI; i++)
+                for (i = 1; i < change; i++)
                     if (board[srcI + i][srcJ + i] != EMPTY)
                         return 0;
             }else if (srcI < trgI && srcJ > trgJ) {//case 2
-                for (i = 1; i < trgI - srcI; i++)
+                for (i = 1; i < change ; i++)
                     if (board[srcI + i][srcJ - i] != EMPTY)
                         return 0;
             }else if (srcI > trgI && srcJ < trgJ){ //case 3
-                for (i = 1; i < srcI - trgI; i++)
+                for (i = 1; i < change; i++)
                     if (board[srcI - i][srcJ + i] != EMPTY)
                         return 0;
             }else{ //case 4
-                for (i = 1; i < srcI - trgI; i++)
+                for (i = 1; i < change; i++)
                     if (board[srcI - i][srcJ - i] != EMPTY)
                         return 0;
             }
@@ -144,10 +154,66 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     }
     return 1;//legal move
 }
+
 static int isLegalCapture(int srcI, int srcJ, int trgI, int trgJ) {
-    return 1;//legal move
+    int piece = board[srcI][srcJ];
+    int pieceType = abs(piece);
+    printf("srcI-> %d \n", srcI);
+    printf("srcJ-> %d \n", srcJ);
+    printf("trgI-> %d \n", trgI);
+    printf("trgJ-> %d \n", trgJ);
+    // pawn will eat diagonally one step
+    if (pieceType == PAWN) {
+        printf("pawn is capturing...\n");
+        if (piece < 0){ //black pawn
+            printf("black pawn...\n");
+            if ((trgJ == srcJ + 1) && (abs(srcI - trgI) == 1)){
+                printf("checking if target space has white piece...\n");
+                if (board[trgI][trgJ] > 0) return 1; //capturing white piece
+                else {
+                    printf("black piece cannot capture black\n");
+                    return 0;
+                }
+            } else {
+                printf("Invalid capture\n");
+                return 0;
+            }
+        } else { //white pawn
+            printf("white pawn...\n");
+            if ((trgJ == abs(srcJ - 1)) && (abs(srcI - trgI) == 1)){
+                printf("checking if target space has black piece...\n");
+                if (board[trgI][trgJ] < 0) return 1; //capturing black piece
+                else {
+                    printf("white piece cannot capture white\n");
+                    return 0;
+                }
+            } else {
+                printf("Invalid capture\n");
+                return 0;
+            }
+        }
+    }
+    if (isLegalMove(srcI, srcJ, trgI, trgJ) && pieceType != PAWN) {
+        if (piece < 0){ //black piece
+            if (board[trgI][trgJ] > 0) return 1;
+             else {
+                 printf("black piece cannot capture black\n");
+                 return 0;
+             }
+
+        } else{ //white piece
+            if (board[trgI][trgJ] < 0) return 1;
+            else {
+                printf("white piece cannot capture white\n");
+                return 0;
+            }
+        }
+    } else {
+        printf("cannot capture empty cell...try 'mv' command instead\n");
+        return 0;
+    }
 }
-//static int turn = WHITE;
+
 
 char getCommandWord(char command[], int maxLength) {
     char lastCharacter;//either space or new line
@@ -279,8 +345,6 @@ main() {
     while (1){ //infinite while loop...
         printf("Please enter a new command... quit , mv , cp , show\n");
         lastCharacter = getCommandWord(command, MAX_COMMAND_TOKEN_LENGTH);
-        printf("you typed %s \n", command);
-
 
         if (strcmp(command, "quit") == 0){ //if command === "quit"
             printf("Thank you for playing...");
