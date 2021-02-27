@@ -1,7 +1,6 @@
 #include<stdio.h>
 #include<math.h>
 #include<string.h>
-//#include<stdlib.h>
 
 #define MAX_COMMAND_TOKEN_LENGTH 6
 #define WHITE 1
@@ -14,6 +13,7 @@
 #define QUEEN 5
 #define PAWN 1
 
+static int turn = WHITE;
 static int board[8][8] = { {-4, -2, -3, -5, -6, -3, -2, -4},
                             {-1, -1, -1, -1, -1, -1, -1, -1},
                             {0, 0, 0, 0, 0, 0, 0, 0},
@@ -48,12 +48,26 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
                         return 0;
         }
     case PAWN: //one space toward opposite side board or two spaces if first time moving
-        if(srcJ == 7 || srcJ == 2){ //if pawn is in starting row, it can move two spaces forward
-
+        int moves = abs(trgJ -srcJ);
+        if(moves < 1 || moves > 2 || (srcI != trgI)) return 0; // pawn can never move more than twice and it cant change columns
+        if(moves == 2 && (srcJ == 7 || srcJ == 2)){ //if pawn is in starting row, it can move two spaces forward
+            if (turn > 0){ //white piece
+                for (i = 1; i < 2; i++)
+                    if (board[srcI][srcJ + i] != EMPTY)
+                        return 0;
+            }else{ //black piece
+                for (i = 1; i < 2; i++)
+                    if (board[srcI][srcJ - i] != EMPTY)
+                        return 0;
+            }
         }else{ //only move once space forward
-            if((srcI != trgI) || (abs(srcJ - trgJ) > 1) ) return 0;
-            else{
-
+            if((abs(srcJ - trgJ) > 1) ) return 0;
+            else if (turn > 0){ //white piece
+                if (board[trgI][trgJ] != EMPTY || (trgJ - srcJ) != 1)
+                    return 0;
+            }else{ //black piece
+                if (board[trgI][trgJ] != EMPTY || (srcJ - trgJ) != 1)
+                    return 0;
             }
         }
         break;
@@ -133,7 +147,7 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
 static int isLegalCapture(int srcI, int srcJ, int trgI, int trgJ) {
     return 1;//legal move
 }
-static int turn = WHITE;
+//static int turn = WHITE;
 
 char getCommandWord(char command[], int maxLength) {
     char lastCharacter;//either space or new line
