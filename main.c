@@ -29,45 +29,104 @@ static int isLegalMove(int srcI, int srcJ, int trgI, int trgJ) {
     switch (pieceType) {
     case ROOK: //straight up/down left/right
         if(srcI != trgI && srcJ != trgJ) return 0;
-        if (srcI < trgI)//case 1 left to right
+        if (srcI < trgI) {//case 1 left to right
             for (i = 1; i < trgI - srcI; i++)
                 if (board[srcI + i][srcJ] != EMPTY)
                     return 0;
-        else if (srcI > trgI)//case 2 right to left
-             for (i = 1; i < srcI - trgI; i++)
-                 if (board[srcI - i][srcJ] != EMPTY)
-                     return 0;
-        break;
-    case PAWN:
+        }else if (srcI > trgI) {//case 2 right to left
+            for (i = 1; i < srcI - trgI; i++)
+                if (board[srcI - i][srcJ] != EMPTY)
+                    return 0;
+        }else if (trgI > srcJ) { //going up
+            for (i = 1; i < trgJ - srcJ; i++)
+                if (board[srcI][srcJ + i] != EMPTY)
+                    return 0;
+        }else { //going down
+            if (srcJ > trgI)
+                for (i = 1; i < srcJ - trgI; i++)
+                    if (board[srcI][srcJ - i] != EMPTY)
+                        return 0;
+        }
+    case PAWN: //one space toward opposite side board or two spaces if first time moving
+        if(srcJ == 7 || srcJ == 2){ //if pawn is in starting row, it can move two spaces forward
+
+        }else{ //only move once space forward
+            if((srcI != trgI) || (abs(srcJ - trgJ) > 1) ) return 0;
+            else{
+
+            }
+        }
         break;
     case KNIGHT://L shape
         return abs((srcI - trgI) * (srcJ - trgJ)) == 2;
     case BISHOP: //diagonals
         if (abs(srcI - trgI) != abs(srcJ - trgJ)) return 0;
-        if (srcI < trgI && srcJ < trgJ)//case 1
+        if (srcI < trgI && srcJ < trgJ) {//case 1
             for (i = 1; i < trgI - srcI; i++)
                 if (board[srcI + i][srcJ + i] != EMPTY)
                     return 0;
-        else if (srcI < trgI && srcJ > trgJ) {//case 2
+        }else if (srcI < trgI && srcJ > trgJ) {//case 2
             for (i = 1; i < trgI - srcI; i++)
                 if (board[srcI + i][srcJ - i] != EMPTY)
                     return 0;
-        }
-        else if (srcI > trgI && srcJ < trgJ){ //case 3
+        }else if (srcI > trgI && srcJ < trgJ){ //case 3
             for (i = 1; i < srcI - trgI; i++)
                 if (board[srcI - i][srcJ + i] != EMPTY)
                     return 0;
-        }
-        else{ //case 4
+        }else{ //case 4
             for (i = 1; i < srcI - trgI; i++)
                 if (board[srcI - i][srcJ - i] != EMPTY)
                     return 0;
         }
         break;
-    case QUEEN:
-        break;
-    case KING:
-        break;
+    case QUEEN: //bishop and Rook movements
+        if ((abs(srcI - trgI) != abs(srcJ - trgJ)) || (srcI != trgI && srcJ != trgJ)) return 0;
+            //Rook move for queen
+            if (srcI < trgI) {//case 1 left to right
+                for (i = 1; i < trgI - srcI; i++)
+                    if (board[srcI + i][srcJ] != EMPTY)
+                        return 0;
+            }else if (srcI > trgI) {//case 2 right to left
+                for (i = 1; i < srcI - trgI; i++)
+                    if (board[srcI - i][srcJ] != EMPTY)
+                        return 0;
+            }else if (trgI > srcJ) { //going up
+                for (i = 1; i < trgJ - srcJ; i++)
+                    if (board[srcI][srcJ + i] != EMPTY)
+                        return 0;
+            }else if(srcJ > trgJ){ //going down
+                if (srcJ > trgI)
+                    for (i = 1; i < srcJ - trgI; i++)
+                        if (board[srcI][srcJ - i] != EMPTY)
+                            return 0;
+            }
+            //Bishop move for queen
+            else if (srcI < trgI && srcJ < trgJ) {//case 1
+                for (i = 1; i < trgI - srcI; i++)
+                    if (board[srcI + i][srcJ + i] != EMPTY)
+                        return 0;
+            }else if (srcI < trgI && srcJ > trgJ) {//case 2
+                for (i = 1; i < trgI - srcI; i++)
+                    if (board[srcI + i][srcJ - i] != EMPTY)
+                        return 0;
+            }else if (srcI > trgI && srcJ < trgJ){ //case 3
+                for (i = 1; i < srcI - trgI; i++)
+                    if (board[srcI - i][srcJ + i] != EMPTY)
+                        return 0;
+            }else{ //case 4
+                for (i = 1; i < srcI - trgI; i++)
+                    if (board[srcI - i][srcJ - i] != EMPTY)
+                        return 0;
+            }
+            break;
+    case KING: //one space any direction
+        if ((trgI == srcI + 1 && trgJ == srcJ) ||
+            (trgI == srcI - 1 && trgJ == srcJ) ||
+            (trgJ == srcJ + 1 && trgI == srcI) ||
+            (trgJ == srcJ - 1 && trgI == srcI)){
+            break;
+
+        }else { return 0; } //king move not allowed
     }
     return 1;//legal move
 }
@@ -140,7 +199,7 @@ void handleMove() {
     board[sourceI][sourceJ] = EMPTY;
     turn *= -1;//WHITE --> BLACK and BLACK --> WHITE
 }
-handleCapture() {
+void handleCapture() {
     char source[MAX_COMMAND_TOKEN_LENGTH];
     char target[MAX_COMMAND_TOKEN_LENGTH];
     char lastCharacter;
@@ -148,13 +207,13 @@ handleCapture() {
     lastCharacter = getCommandWord(source, MAX_COMMAND_TOKEN_LENGTH);
     if (lastCharacter == '\n') {
         printf("Too few arguments for cp command! It must be in the form of cp ai bj.\n");
-        return 0;
+        return;
     }
     lastCharacter = getCommandWord(target, MAX_COMMAND_TOKEN_LENGTH);
     if (lastCharacter != '\n') {
         printf("Too many arguments for cp command! It must be in the form of cp ai bj.\n");
         while (getCommandWord(target, MAX_COMMAND_TOKEN_LENGTH) != '\n');
-        return 0;
+        return;
     }
     sourceFile = source[0];
     targetFile = target[0];
@@ -167,24 +226,24 @@ handleCapture() {
     if (sourceI < 0 || sourceJ < 0 || targetI < 0 || targetJ < 0
         || sourceI > 7 || sourceJ > 7 || targetI > 7 || targetJ > 7) {
         printf("invalid mv arguments\n");
-        return 0;
+        return;
     }
     //checking the turn first
     if (board[sourceI][sourceJ] * turn < 0) {
         printf("Turn violation, it's %s to move", turn == WHITE ? "WHITE" : "BLACK");
-        return 0;
+        return;
     }
     if (board[sourceI][sourceJ] * board[targetI][targetJ] > 0) {
         printf("Violation, %s cannot capture its own piece.", turn == WHITE ? "WHITE" : "BLACK");
-        return 0;
+        return;
     }
     if (board[sourceI][sourceJ] == EMPTY || board[targetI][targetJ] == EMPTY) {
         printf("Invalid capture: either source square is empty or target square is empty");
-        return 0;
+        return;
     }
     if (!isLegalCapture(sourceI, sourceJ, targetI, targetJ)) {
         printf("Illegal chess capture");
-        return 0;
+        return;
     }
     //end of error checking....
     board[targetI][targetJ] = board[sourceI][sourceJ];
